@@ -1,127 +1,126 @@
-let CELLS = document.getElementsByClassName('cell')
-let turn = -1
-for(let cell of CELLS) {
-    cell.addEventListener('click',()=>{
-        if(cell.innerText != '') return
-        // cell.innerText = turn < 0 ? 'X' : 'O'
-        // turn=turn*-1;
-        cell.innerText = 'X';
-        let state = checkWin()
-        setTimeout(()=>{
-            if(state != -2){
-                if ( state == 0) alert("X wins!");
-                else if (state == 1) alert("O wins!");
-                else if (state == -1) alert("Tie!");
-            }
-        },100)  
-        let aiCell = MiniMax(true,-Infinity,Infinity,1);
-        aiCell.innerText = 'O';
-        state = checkWin();
-        setTimeout(()=>{
-            if(state != -2){
-                if ( state == 0) alert("X wins!");
-                else if (state == 1) alert("O wins!");
-                else if (state == -1) alert("Tie!");
-            }
-        },100)     
-    })
+const cellElements = document.getElementById("container").children;
+
+let BOARD = ["-", "-", "-", "-", "-", "-", "-", "-", "-"];
+
+function checkGameState(board) {
+  const CHECK_MASKS = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6],
+  ];
+
+  for (let mask of CHECK_MASKS) {
+    if (
+      board[mask[0]] == board[mask[1]] &&
+      board[mask[1]] == board[mask[2]] &&
+      board[mask[2]] != "-"
+    ) {
+      const winner = board[mask[0]];
+      return winner;
+    }
+  }
+  for (let i = 0; i < board.length; i++) {
+    if (board[i] == "-") return undefined;
+  }
+  return "TIE";
 }
 
-// -1 tie/indeterminate
-// 0  - X
-// 1 - O 
-// Maximizing Player ( AI ) -> Positive evaluation
-// Minimizing Player ( User ) -> Negative evaluation
-function MiniMax(isMaximizingPlayer,alpha,beta,depth){
-    let state = checkWin();
-    console.log(isMaximizingPlayer,depth);
-    if(depth == 9 || state != -2){
-        if(state == 0) return -100/depth;
-        if(state == 1) return 100/depth;
-        if(state == -1) return 1/depth;
-    }
-    let possiblePositions = [];
-    for(let cell of CELLS){
-        if(cell.innerText == '') possiblePositions.push(cell);
-    }
-    if(isMaximizingPlayer){
-        let score = -Infinity;
-        let bestPos = undefined
-        for(let pos of possiblePositions){
-            pos.innerText = 'O'
-            eval = MiniMax(false,alpha,beta,depth+1);
-            if(eval > score){
-                score = eval;
-                bestPos = pos
-            }
-            pos.innerText = ''
-            alpha = Math.max(eval,alpha);
-            if(beta <= alpha) break;
+function MINIMAX(
+  board,
+  isMaximizingPlayer,
+  maximizingPlayerSymbol,
+  minimizingPlayerSymbol
+) {
+  const getState = checkGameState(board);
+
+  if (getState == maximizingPlayerSymbol) {
+    return [1, undefined];
+  }
+  if (getState == minimizingPlayerSymbol) {
+    return [-1, undefined];
+  }
+  if (getState == "TIE") {
+    return [0, undefined];
+  }
+  if (isMaximizingPlayer) {
+    let MAX_SCORE = -Infinity;
+    let MAX_MOVE = undefined;
+    for (let i = 0; i < board.length; i++) {
+      if (board[i] == "-") {
+        // Possible placing point.
+        board[i] = maximizingPlayerSymbol;
+        let [score, move] = MINIMAX(
+          board,
+          false,
+          maximizingPlayerSymbol,
+          minimizingPlayerSymbol
+        );
+        board[i] = "-";
+        if (score > MAX_SCORE) {
+          MAX_SCORE = score;
+          MAX_MOVE = i;
         }
-        if(depth == 1) return bestPos
-        return score;
+      }
     }
-    else{
-        let score = Infinity;
-        for(let pos of possiblePositions){
-            pos.innerText = 'X'
-            eval = MiniMax(false,alpha,beta,depth+1);
-            score = Math.min(score,eval);
-            pos.innerText = ''
-            beta = Math.min(eval,beta);
-            if(beta <= alpha) break;
+    return [MAX_SCORE, MAX_MOVE];
+  } else {
+    let MIN_SCORE = Infinity;
+    let MIN_MOVE = undefined;
+    for (let i = 0; i < board.length; i++) {
+      if (board[i] == "-") {
+        // Possible placing point.
+        board[i] = minimizingPlayerSymbol;
+        let [score, move] = MINIMAX(
+          board,
+          true,
+          maximizingPlayerSymbol,
+          minimizingPlayerSymbol
+        );
+        board[i] = "-";
+        if (score < MIN_SCORE) {
+          MIN_SCORE = score;
+          MIN_MOVE = i;
         }
-        return score;
+      }
     }
-}
-function Grid(x,y){
-    return CELLS[3*x+y];
-}
-
-
-// -1 tie/indeterminate
-// 0  - X
-// 1 - O
-function checkWin(){
-    let grid = [[-1,-1,-1],[-1,-1,-1],[-1,-1,-1]]
-    
-    let can_tie = true;
-    for(let i = 0 ; i < 3 ; i++){
-        for(let j = 0 ; j < 3 ; j++){
-            let state;
-            if(Grid(i,j).innerText == ''){
-                state = -1;
-                can_tie = false;
-            }
-            if(Grid(i,j).innerText == 'X') state = 0; 
-            if(Grid(i,j).innerText == 'O') state = 1; 
-            grid[i][j] = state;
-        }
-    }
-    //     R 0 1 2 C 0 1 2
-    let x = [0,0,0,0,0,0]
-    let o = [0,0,0,0,0,0]
-    for(let i = 0 ; i < 3 ; i++){
-        for(let j = 0 ; j < 3 ; j++){
-            if(grid[i][j] == 0) x[i]++
-            if(grid[i][j] == 1) o[i]++
-
-            if(grid[j][i] == 0) x[i+3]++
-            if(grid[j][i] == 1) o[i+3]++
-        }
-    }
-    for(let i = 0 ; i < 6 ; i++){
-        if (x[i] == 3) return 0; // X wins;
-        if (o[i] == 3) return 1; // O wins;
-    }
-
-    if(grid[0][0] == 0 && grid[1][1] == 0 && grid[2][2] == 0) return 0;
-    if(grid[0][0] == 1 && grid[1][1] == 1 && grid[2][2] == 1) return 1;
-
-    if(grid[0][2] == 0 && grid[1][1] == 0 && grid[2][0] == 0) return 0;
-    if(grid[0][2] == 1 && grid[1][1] == 1 && grid[2][0] == 1) return 1;
-
-    if(can_tie) return -1;
-    return -2;
+    return [MIN_SCORE, MIN_MOVE];
+  }
 }
 
+let isGameOver = false;
+for (let i = 0; i < BOARD.length; i++) {
+  cellElements[i].addEventListener("click", () => {
+    if (BOARD[i] != "-" || isGameOver) return;
+    BOARD[i] = "X";
+    cellElements[i].textContent = "X";
+    // Check Game State
+    let gameState = checkGameState(BOARD);
+    if (gameState != undefined) {
+      // An Ending happened!
+      setTimeout(() => {
+        alert(`Winner! : ${gameState}`);
+      }, 10);
+      isGameOver = true;
+    }
+
+    // Get AI's Move
+    let [score, move] = MINIMAX(BOARD, true, "O", "X");
+    console.log(score, move);
+
+    BOARD[move] = "O"; // AI players move.
+    cellElements[move].textContent = "O";
+    gameState = checkGameState(BOARD);
+    if (gameState != undefined) {
+      // An Ending happened!
+      setTimeout(() => {
+        alert(`Winner! : ${gameState}`);
+      }, 10);
+      isGameOver = true;
+    }
+  });
+}
