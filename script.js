@@ -34,10 +34,11 @@ function MINIMAX(
   board,
   isMaximizingPlayer,
   maximizingPlayerSymbol,
-  minimizingPlayerSymbol
+  minimizingPlayerSymbol,
+  alpha,
+  beta
 ) {
   const getState = checkGameState(board);
-
   if (getState == maximizingPlayerSymbol) {
     return [1, undefined];
   }
@@ -58,13 +59,17 @@ function MINIMAX(
           board,
           false,
           maximizingPlayerSymbol,
-          minimizingPlayerSymbol
+          minimizingPlayerSymbol,
+          alpha,
+          beta
         );
         board[i] = "-";
         if (score > MAX_SCORE) {
           MAX_SCORE = score;
           MAX_MOVE = i;
         }
+        alpha = Math.max(alpha, score);
+        if (beta <= alpha) break;
       }
     }
     return [MAX_SCORE, MAX_MOVE];
@@ -79,13 +84,19 @@ function MINIMAX(
           board,
           true,
           maximizingPlayerSymbol,
-          minimizingPlayerSymbol
+          minimizingPlayerSymbol,
+          alpha,
+          beta
         );
+
         board[i] = "-";
         if (score < MIN_SCORE) {
           MIN_SCORE = score;
           MIN_MOVE = i;
         }
+
+        beta = Math.min(beta, score);
+        if (beta <= alpha) break;
       }
     }
     return [MIN_SCORE, MIN_MOVE];
@@ -109,7 +120,10 @@ for (let i = 0; i < BOARD.length; i++) {
     }
 
     // Get AI's Move
-    let [score, move] = MINIMAX(BOARD, true, "O", "X");
+
+    let alpha = -Infinity;
+    let beta = Infinity;
+    let [score, move] = MINIMAX(BOARD, true, "O", "X", alpha, beta);
     console.log(score, move);
 
     BOARD[move] = "O"; // AI players move.
